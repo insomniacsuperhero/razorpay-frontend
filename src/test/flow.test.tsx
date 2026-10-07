@@ -4,20 +4,31 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BladeProvider } from '@razorpay/blade/components';
 import { bladeTheme } from '@razorpay/blade/tokens';
-import { DisputeWorkspace } from '../App';
+import { AppRoutes } from '../App';
+import { AppContext } from '../features/app';
 import { createFakeApi, createFakeMerchant, sampleDetail } from '../dev/Preview';
 
-function renderFlow(scenario = 'new') {
+function renderFlow(scenario = 'new', start = '/d/disp_SampleTk9x2Q') {
   const detail = sampleDetail(scenario);
   const api = createFakeApi(detail);
   const merchant = createFakeMerchant(detail);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(<BladeProvider themeTokens={bladeTheme} colorScheme="light"><QueryClientProvider client={client}>
-    <MemoryRouter initialEntries={['/d/x']}><Routes><Route path="/d/x/*" element={<DisputeWorkspace id="disp_SampleTk9x2Q" api={api} merchant={merchant} root="/d/x" expire={() => undefined} />} /></Routes></MemoryRouter>
+    <MemoryRouter initialEntries={[start]}><AppContext.Provider value={{ merchant, base: '', onAuthError: () => undefined }}>
+      <Routes><Route path="/*" element={<AppRoutes expire={() => undefined} makeApi={() => api} />} /></Routes>
+    </AppContext.Provider></MemoryRouter>
   </QueryClientProvider></BladeProvider>);
   return api;
 }
 const file = (name: string) => new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0])], name, { type: 'image/jpeg' });
+
+describe('app shell', () => {
+  it('opens Home with account data without any dispute link', async () => {
+    renderFlow('new', '/');
+    expect(await screen.findByText('Collected today')).toBeInTheDocument();
+    expect(await screen.findByText('Recent payments')).toBeInTheDocument();
+  });
+});
 
 describe('seller flow (spec screens 1-7)', () => {
   it('goes from the dispute to a submitted response with the seller approving', async () => {

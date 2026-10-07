@@ -10,14 +10,14 @@ import { ApiError } from '../api/client';
 import type { DisputeListItem, NotificationItem, PaymentItem } from '../api/merchant';
 import { initials, MERCHANT_NAME, TabPage } from '../components/AppShell';
 import { deadlineParts, METHOD, paymentDate, useNow } from '../lib/format';
-import { disputePath, useWorkspace } from './workspace';
+import { disputeHref, useApp } from './app';
 import { PhoneNotificationsRow, PushPrompt } from './PhoneNotifications';
 
 /* ---------------- data ---------------- */
 
 /** Query helper for the tabs: shares the workspace's auth handling and refreshes in the background. */
 export function useMerchant<T>(key: QueryKey, fn: (signal: AbortSignal) => Promise<T>, refetchMs = 30_000) {
-  const { onAuthError } = useWorkspace();
+  const { onAuthError } = useApp();
   const q = useQuery({ queryKey: ['merchant', ...key], queryFn: ({ signal }) => fn(signal), refetchInterval: refetchMs, staleTime: 10_000 });
   useEffect(() => { if (q.error instanceof ApiError && q.error.isAuth) onAuthError(); }, [q.error, onAuthError]);
   return q;
@@ -39,11 +39,11 @@ function Empty({ icon: Icon, title, sub }: { icon: ComponentType<{ size?: 'xlarg
 /* ---------------- shared pieces ---------------- */
 
 function DisputeAlert({ d }: { d: DisputeListItem }) {
-  const ws = useWorkspace();
+  const ws = useApp();
   const now = useNow(60_000);
   const dl = deadlineParts(d.respond_by_iso, now);
   return (
-    <Link to={disputePath(ws, d.id)} className={`dispute-alert ${dl?.urgent ? 'urgent' : ''}`}>
+    <Link to={disputeHref(ws.base, d.id)} className={`dispute-alert ${dl?.urgent ? 'urgent' : ''}`}>
       <AlertTriangleIcon size="large" color="feedback.icon.notice.intense" />
       <div>
         <Text weight="semibold">{d.bank_request ? `The bank needs more proof · ${d.amount_display}` : `Dispute on ${d.amount_display}`}</Text>
@@ -65,7 +65,7 @@ const STATUS_BADGE: Record<string, { t: string; c: 'positive' | 'negative' | 'ne
 };
 
 function PaymentRow({ p }: { p: PaymentItem }) {
-  const { root } = useWorkspace();
+  const { base: root } = useApp();
   const b = p.dispute ? DISPUTE_BADGE[p.dispute.status] || DISPUTE_BADGE.open : STATUS_BADGE[p.status] || { t: p.status, c: 'neutral' as const };
   return (
     <Link to={`${root}/payments/${p.id}`} className="pay-row">
@@ -81,8 +81,8 @@ function PaymentRow({ p }: { p: PaymentItem }) {
 /* ---------------- Home ---------------- */
 
 export function HomeTab() {
-  const ws = useWorkspace();
-  const { merchant, root } = ws;
+  const ws = useApp();
+  const { merchant, base: root } = ws;
   const navigate = useNavigate();
   const ov = useMerchant(['overview'], s => merchant.overview(s));
   const disputes = useMerchant(['disputes'], s => merchant.disputes(s));
@@ -152,7 +152,7 @@ export function HomeTab() {
 /* ---------------- Payments ---------------- */
 
 export function PaymentsTab() {
-  const { merchant, root } = useWorkspace();
+  const { merchant, base: root } = useApp();
   const [tab, setTab] = useState<'tx' | 'st'>('tx');
   const [days, setDays] = useState(7);
   const [draft, setDraft] = useState('');
@@ -188,8 +188,8 @@ export function PaymentsTab() {
 
 /** Payment detail (existing app screen) with a Dispute section: the in-app way into the flow. */
 export function PaymentDetail() {
-  const ws = useWorkspace();
-  const { merchant, root } = ws;
+  const ws = useApp();
+  const { merchant, base: root } = ws;
   const { paymentId = '' } = useParams();
   const navigate = useNavigate();
   const now = useNow(60_000);
@@ -228,7 +228,7 @@ export function PaymentDetail() {
               <div className="row-head"><Text weight="semibold">Dispute</Text><Badge color={(DISPUTE_BADGE[d.status] || DISPUTE_BADGE.open).c} emphasis="subtle" size="small">{d.status === 'open' ? 'Action required' : (DISPUTE_BADGE[d.status] || DISPUTE_BADGE.open).t}</Badge></div>
               <Text>{d.reason_label}</Text>
               {d.status === 'open' && dl && <Text size="small" color="feedback.text.notice.intense">Respond by {dl.when} · {dl.countdown}</Text>}
-              <Button isFullWidth variant={d.status === 'open' ? 'primary' : 'secondary'} onClick={() => navigate(disputePath(ws, d.id))}>{d.status === 'open' ? 'Respond to dispute' : 'View dispute'}</Button>
+              <Button isFullWidth variant={d.status === 'open' ? 'primary' : 'secondary'} onClick={() => navigate(disputeHref(ws.base, d.id))}>{d.status === 'open' ? 'Respond to dispute' : 'View dispute'}</Button>
             </div>
           )}
         </>}
@@ -246,7 +246,7 @@ type Bucket = 'action' | 'review' | 'closed';
 const bucketOf = (d: DisputeListItem): Bucket => d.status === 'open' ? 'action' : d.status === 'under_review' ? 'review' : 'closed';
 
 export function DisputesTab() {
-  const ws = useWorkspace();
+  const ws = useApp();
   const now = useNow(60_000);
   const q = useMerchant(['disputes'], s => ws.merchant.disputes(s), 20_000);
   const [tab, setTab] = useState<Bucket>('action');
@@ -254,7 +254,7 @@ export function DisputesTab() {
   const label: Record<Bucket, string> = { action: 'Needs response', review: 'In review', closed: 'Closed' };
   const shown = items.filter(d => bucketOf(d) === tab);
   return (
-    <TabPage root={ws.root} title="Disputes">
+    <TabPage root={ws.base} title="Disputes">
       <div className="chips">
         {(['action', 'review', 'closed'] as Bucket[]).map(b => (
           <button key={b} className={`chip filter ${tab === b ? 'on' : ''}`} onClick={() => setTab(b)}>{label[b]} {items.filter(d => bucketOf(d) === b).length}</button>
@@ -266,7 +266,7 @@ export function DisputesTab() {
           : d.status === 'under_review' ? { t: 'Under review', c: 'information' as const } : d.status === 'won' ? { t: 'Won', c: 'positive' as const }
           : d.status === 'lost' ? { t: 'Lost', c: 'negative' as const } : { t: 'Closed', c: 'neutral' as const };
         return (
-          <Link key={d.id} to={disputePath(ws, d.id)} className={`card dispute-row ${d.status === 'open' ? '' : 'calm'}`}>
+          <Link key={d.id} to={disputeHref(ws.base, d.id)} className={`card dispute-row ${d.status === 'open' ? '' : 'calm'}`}>
             <div className="row-head"><Text size="large" weight="semibold">{d.amount_display}</Text><Badge color={b.c} emphasis="subtle" size="small">{b.t}</Badge></div>
             <Text>{d.reason_label}</Text>
             <Text size="small" color="surface.text.gray.muted">{d.payment_id} · raised {time(d.created_at)}</Text>
@@ -283,7 +283,7 @@ export function DisputesTab() {
 /* ---------------- Products ---------------- */
 
 export function ProductsTab() {
-  const { merchant, root } = useWorkspace();
+  const { merchant, base: root } = useApp();
   const q = useMerchant(['products'], s => merchant.products(s), 60_000);
   const tile = (Icon: ComponentType<{ size?: 'large'; color?: 'surface.icon.gray.normal' }>, t: string, s: string, stat?: string | null) => (
     <div className="tile"><span className="tile-icon"><Icon size="large" color="surface.icon.gray.normal" /></span><Text size="large" weight="semibold">{t}</Text><Text size="small" color="surface.text.gray.muted">{s}</Text>
@@ -314,20 +314,17 @@ export function ProductsTab() {
 /* ---------------- Support: RAY ---------------- */
 
 export function SupportTab() {
-  const ws = useWorkspace();
-  const { merchant, root, startTimer, openProofSheet, data } = ws;
+  const { merchant, base } = useApp();
   const navigate = useNavigate();
   const now = useNow(60_000);
   const disputes = useMerchant(['disputes'], s => merchant.disputes(s), 20_000);
-  const [asked, setAsked] = useState<string | null>(null);
+  const [asked, setAsked] = useState<DisputeListItem | null>(null);
+  const payment = useQuery({ queryKey: ['merchant', 'payment', asked?.payment_id], queryFn: ({ signal }) => merchant.payment(asked!.payment_id, signal), enabled: !!asked });
   const open = (disputes.data?.items || []).filter(d => d.status === 'open');
   const recent = (disputes.data?.items || []).filter(d => d.status !== 'open').slice(0, 2);
-  const p = data.payment;
-  function addProof(d: DisputeListItem) {
-    if (d.id === data.dispute.id) { startTimer(); navigate(root); openProofSheet(); } else navigate(disputePath(ws, d.id));
-  }
+  const p = payment.data;
   return (
-    <TabPage root={root} flush header={
+    <TabPage root={base} flush header={
       <header className="ray-header"><RayIcon size="large" color="surface.icon.staticWhite.normal" /><Text weight="semibold" color="surface.text.staticWhite.normal">RAY</Text><span className="concept">Concept</span></header>}>
       <div className="chat">
         {disputes.isPending && <Spinner accessibilityLabel="Loading" />}
@@ -340,15 +337,17 @@ export function SupportTab() {
                 ? `The bank needs more proof for the ${d.amount_display} dispute: ${d.bank_request.reason || 'the evidence was unclear'}.${dl ? ` Respond by ${dl.when}.` : ''}`
                 : `You have a dispute on ${d.amount_display}. ${d.reason_label}.${dl ? ` Respond by ${dl.when}.` : ''}`}</Text>
               <div className="bubble-actions">
-                <Button size="small" onClick={() => addProof(d)}>{d.evidence_files ? 'Continue' : 'Add proof'}</Button>
-                {d.id === data.dispute.id && p && <Button size="small" variant="secondary" onClick={() => setAsked(d.id)}>What was this payment?</Button>}
+                <Button size="small" onClick={() => navigate(disputeHref(base, d.id), { state: { openSheet: !d.evidence_files } })}>{d.evidence_files ? 'Continue' : 'Add proof'}</Button>
+                <Button size="small" variant="secondary" onClick={() => setAsked(d)}>What was this payment?</Button>
               </div>
             </div>
           );
         })}
-        {asked && p && <>
+        {asked && <>
           <div className="bubble me"><Text>What was this payment?</Text></div>
-          <div className="bubble ray"><Text>{`${p.amount_display} by ${METHOD[p.method] || p.method} on ${paymentDate(p.created_at)}${p.order_ref ? `, order ${p.order_ref}` : ''}${p.contact_masked ? `, from ${p.contact_masked}` : ''}. Payment ID ${p.id}.`}</Text></div>
+          <div className="bubble ray">{payment.isPending ? <Spinner accessibilityLabel="Loading" size="medium" /> : p
+            ? <Text>{`${p.amount_display} by ${METHOD[p.method] || p.method} on ${paymentDate(p.created_at)}${p.order_ref ? `, order ${p.order_ref}` : ''}${p.contact_masked ? `, from ${p.contact_masked}` : ''}. Payment ID ${p.id}.`}</Text>
+            : <Text>I couldn't find that payment.</Text>}</div>
         </>}
         {recent.map(d => (
           <div key={d.id} className="bubble ray"><Text>{d.status === 'under_review' ? `Your response for the ${d.amount_display} dispute is with the bank. I'll tell you when they decide.` : `The ${d.amount_display} dispute is ${d.status}.`}</Text></div>
@@ -363,7 +362,7 @@ export function SupportTab() {
 /* ---------------- Account ---------------- */
 
 export function AccountTab() {
-  const { merchant, root } = useWorkspace();
+  const { merchant, base: root } = useApp();
   const navigate = useNavigate();
   const prof = useMerchant(['profile'], s => merchant.profile(s), 300_000);
   const name = prof.data?.name && prof.data.name !== 'Your business' ? prof.data.name : MERCHANT_NAME;
@@ -398,7 +397,7 @@ const CHANNEL: Record<string, { label: string; icon: ComponentType<{ size?: 'med
 };
 
 export function NotificationsScreen() {
-  const ws = useWorkspace();
+  const ws = useApp();
   const navigate = useNavigate();
   const prof = useMerchant(['profile'], s => ws.merchant.profile(s), 300_000);
   const log = useMerchant(['notifications'], s => ws.merchant.notifications(s), 15_000);
@@ -411,7 +410,7 @@ export function NotificationsScreen() {
   return (
     <div className="tab-page">
       <header className="page-header with-back">
-        <IconButton icon={ArrowLeftIcon} size="large" accessibilityLabel="Back" onClick={() => navigate(`${ws.root}/account`)} />
+        <IconButton icon={ArrowLeftIcon} size="large" accessibilityLabel="Back" onClick={() => navigate(`${ws.base}/account`)} />
         <Text size="large" weight="semibold">Notification</Text>
       </header>
       <main className="tab-content">
@@ -425,7 +424,7 @@ export function NotificationsScreen() {
         <Text size="xsmall" color="surface.text.gray.muted">Sent when a dispute is raised and when the bank asks for more proof, with reminders 24 h and 6 h before the deadline until you respond.</Text>
         <Text size="small" weight="semibold" color="surface.text.gray.subtle">RECENT ALERTS</Text>
         {log.isPending ? <Loading /> : log.isError ? <Failed error={log.error} retry={() => void log.refetch()} /> : groups.size ? [...groups.values()].map(g => (
-          <button key={`${g[0]!.dispute_id}${g[0]!.kind}`} className="card alert-log" onClick={() => navigate(disputePath(ws, g[0]!.dispute_id))}>
+          <button key={`${g[0]!.dispute_id}${g[0]!.kind}`} className="card alert-log" onClick={() => navigate(disputeHref(ws.base, g[0]!.dispute_id))}>
             <Text weight="semibold">{g[0]!.title}</Text>
             <Text size="small" color="surface.text.gray.subtle">{g[0]!.body}</Text>
             <div className="alert-channels">{g.map(n => {

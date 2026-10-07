@@ -22,7 +22,7 @@ export function readSession(id: string): Session | null {
   return readKey(id) || readKey(MERCHANT);
 }
 function saveSession(session: Session) {
-  for (const key of [session.dispute_id, MERCHANT]) {
+  for (const key of session.dispute_id ? [session.dispute_id, MERCHANT] : [MERCHANT]) {
     memory.set(key, session);
     try { localStorage.setItem(PREFIX + key, JSON.stringify(session)); } catch { /* Fall back to tab memory. */ }
   }
@@ -45,4 +45,14 @@ export function exchangeLink(id: string, linkToken: string): Promise<Session> {
     saveSession(session); return session;
   }).finally(() => exchanges.delete(key));
   exchanges.set(key, promise); return promise;
+}
+
+/** Prototype open access: sign in as the demo merchant without an alert link (404/403 when the server disallows it). */
+let opening: Promise<Session> | null = null;
+export function openSession(): Promise<Session> {
+  opening ||= request<Session>('/sessions/open', { method: 'POST', body: {} }).then(session => {
+    if (!validSession(session, MERCHANT)) throw new ApiError('AUTH_INVALID', 'Could not open the app.', 403);
+    saveSession(session); return session;
+  }).finally(() => { opening = null; });
+  return opening;
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangleIcon, Text } from '@razorpay/blade/components';
-import { disputePath, useWorkspace } from './workspace';
+import { disputeHref, useApp } from './app';
 
 const SEEN = 'proof-bridge:push-seen';
 const seen = (): number[] => { try { return JSON.parse(sessionStorage.getItem(SEEN) || '[]'); } catch { return []; } };
@@ -10,7 +10,7 @@ const markSeen = (id: number) => { try { sessionStorage.setItem(SEEN, JSON.strin
 
 /** In-app push: the newest unread in-app alert slides in at the top of whatever screen is open. */
 export function PushBanner() {
-  const ws = useWorkspace();
+  const ws = useApp();
   const navigate = useNavigate();
   const client = useQueryClient();
   const q = useQuery({ queryKey: ['merchant', 'notifications'], queryFn: ({ signal }) => ws.merchant.notifications(signal), refetchInterval: 15_000 });
@@ -25,7 +25,7 @@ export function PushBanner() {
   function open() {
     markSeen(next!.id); setHidden(next!.id);
     void ws.merchant.markRead().then(() => client.invalidateQueries({ queryKey: ['merchant', 'notifications'] })).catch(() => undefined);
-    navigate(disputePath(ws, next!.dispute_id));
+    navigate(disputeHref(ws.base, next!.dispute_id));
   }
   return (
     <button className="push" onClick={open} aria-live="polite">

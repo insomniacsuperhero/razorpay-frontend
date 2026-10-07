@@ -2,7 +2,7 @@ import type { ComponentType, ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import { AlertOctagonIcon, GridIcon, HelpCircleIcon, HomeIcon, TransactionsIcon, UserIcon } from '@razorpay/blade/components';
 import { useQuery } from '@tanstack/react-query';
-import { useWorkspace } from '../features/workspace';
+import { useApp } from '../features/app';
 import { Text } from '@razorpay/blade/components';
 
 /** The Razorpay merchant app frame: a page header and the five bottom tabs.
@@ -28,10 +28,10 @@ const TABS: { to: string; label: string; icon: IconT }[] = [
 ];
 
 function TabBar({ root }: { root: string }) {
-  const { data, merchant } = useWorkspace();
+  const { merchant } = useApp();
   const list = useQuery({ queryKey: ['merchant', 'disputes'], queryFn: ({ signal }) => merchant.disputes(signal), refetchInterval: 20_000, staleTime: 10_000 });
   // disputes waiting for a response, across the account (falls back to this one while loading)
-  const pending = list.data ? list.data.items.filter(d => d.status === 'open').length : data.dispute.status === 'open' ? 1 : 0;
+  const pending = list.data ? list.data.items.filter(d => d.status === 'open').length : 0;
   return (
     <nav className="tabbar" aria-label="Main">
       {TABS.map(t => (

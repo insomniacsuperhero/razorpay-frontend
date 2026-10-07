@@ -1,4 +1,4 @@
-export interface Session { access_token: string; token_type: string; expires_at: string; dispute_id: string }
+export interface Session { access_token: string; token_type: string; expires_at: string; dispute_id: string | null }
 export interface Requirement { field: string; label: string }
 export type EvidenceStatus = 'queued' | 'extracting' | 'analysing' | 'validating' | 'uploading' | 'ready' | 'failed';
 export interface EvidenceFact { key: string; label: string; value: string | number | null; display: string | number; source: string; edited: boolean; matches_payment: boolean }

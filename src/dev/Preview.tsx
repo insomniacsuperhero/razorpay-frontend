@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { DisputeWorkspace } from '../App';
+import { AppRoutes } from '../App';
+import { AppContext } from '../features/app';
 import type { Coverage, DisputeDetail, EvidenceCard, EvidencePatch } from '../api/types';
 import type { DisputeApi } from '../api/workflow';
 import type { DisputeListItem, MerchantApi, NotificationItem, PaymentItem } from '../api/merchant';
@@ -176,5 +177,8 @@ export default function Preview() {
   const [params] = useSearchParams();
   const [scenario] = useState(() => params.get('s') || 'new');   // keep the scenario while navigating between screens
   const { api, merchant } = useMemo(() => { const d = sampleDetail(scenario); return { api: createFakeApi(d), merchant: createFakeMerchant(d) }; }, [scenario]);
-  return <DisputeWorkspace key={scenario} id="disp_SampleTk9x2Q" api={api} merchant={merchant} root="/preview" expire={() => undefined} preview />;
+  const makeApi = useCallback(() => api, [api]);   // the sample app has one dispute
+  return <AppContext.Provider value={{ merchant, base: '/preview', preview: true, onAuthError: () => undefined }}>
+    <AppRoutes expire={() => undefined} makeApi={makeApi} preview />
+  </AppContext.Provider>;
 }

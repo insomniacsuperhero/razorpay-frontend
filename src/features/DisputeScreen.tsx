@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Alert, Badge, BottomSheet, BottomSheetBody, BottomSheetFooter, BottomSheetHeader, Button, CheckCircleIcon,
@@ -8,6 +8,7 @@ import { ApiError } from '../api/client';
 import { KV, Panel, Screen, Section } from '../components/ui';
 import { activeEvidence, deadlineParts, elapsed, isUseful, METHOD, newKey, paymentDate, secondsText, useNow } from '../lib/format';
 import { useWorkspace } from './workspace';
+import { useApp } from './app';
 
 const STATUS_BADGE: Record<string, { text: string; color: 'notice' | 'information' | 'positive' | 'negative' | 'neutral' }> = {
   open: { text: 'Action required', color: 'notice' },
@@ -21,7 +22,12 @@ const STATUS_BADGE: Record<string, { text: string; color: 'notice' | 'informatio
 export function DisputeScreen() {
   const { data, api, openProofSheet, startTimer, refresh, onAuthError, root } = useWorkspace();
   const navigate = useNavigate();
-  const location = useLocation() as { state?: { submittedSeconds?: number | null } };
+  const location = useLocation() as { state?: { submittedSeconds?: number | null; openSheet?: boolean } };
+  const { base } = useApp();
+  const sheetAsked = useRef(false);
+  useEffect(() => {
+    if (location.state?.openSheet && !sheetAsked.current && data.dispute.status === 'open') { sheetAsked.current = true; startTimer(); openProofSheet(); }
+  }, [location.state, data.dispute.status, startTimer, openProofSheet]);
   const now = useNow(30_000);
   const [details, setDetails] = useState(false);
   const [accepting, setAccepting] = useState(false);
@@ -60,7 +66,7 @@ export function DisputeScreen() {
   );
 
   return (
-    <Screen title="Dispute" back={`${root}/disputes`} footer={footer}>
+    <Screen title="Dispute" back={`${base}/disputes`} footer={footer}>
       <div className="hero">
         <div className="hero-top">
           <Text size="small" color="surface.text.gray.muted">Chargeback · {d.id}</Text>

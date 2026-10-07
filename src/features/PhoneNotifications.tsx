@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { BellIcon, Button, CheckCircleIcon, ShareIcon, Text } from '@razorpay/blade/components';
 import { disablePush, enablePush, isIOS, pushState, type PushState } from '../lib/push';
-import { useWorkspace } from './workspace';
+import { useApp } from './app';
 
 function usePush() {
-  const { merchant, preview } = useWorkspace();
+  const { merchant, preview } = useApp();
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

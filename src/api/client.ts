@@ -22,6 +22,6 @@ export async function request<T>(path: string, options: { method?: string; token
   } catch (error) {
     if (error instanceof ApiError) throw error;
     if (options.signal?.aborted) throw error;
-    throw new ApiError('NETWORK_ERROR', controller.signal.aborted ? 'The service took too long to respond. It may be waking up. Please try again.' : 'Unable to reach Proof Bridge. Check your connection and try again.', 0);
+    throw new ApiError('NETWORK_ERROR', controller.signal.aborted ? 'The service took too long to respond. It may be waking up. Please try again.' : 'Could not reach the server. Check your connection and try again.', 0);
   } finally { clearTimeout(timeout); options.signal?.removeEventListener('abort', abort); }
 }
