@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, type QueryKey } from '@tanstack/react-query';
 import {
   AlertTriangleIcon, ArrowLeftIcon, BankIcon, Badge, BellIcon, Button, CheckCircleIcon, ChevronDownIcon, ChevronRightIcon,
-  ChevronUpIcon, CreditCardIcon, FileIcon, GlobeIcon, GridIcon, HelpCircleIcon, IconButton, InvoicesIcon, LinkIcon,
+  CalendarIcon, ChevronUpIcon, CopyIcon, ShieldIcon, CreditCardIcon, DownloadIcon, FileIcon, FilterIcon, GlobeIcon, TransactionsIcon, GridIcon, HelpCircleIcon, IconButton, InvoicesIcon, LinkIcon,
   MailIcon, MessageCircleIcon, PaymentLinksIcon, PaymentPagesIcon, QRCodeIcon, RayIcon, SearchIcon, ShareIcon, Spinner, Text,
 } from '@razorpay/blade/components';
 import { ApiError } from '../api/client';
@@ -92,58 +92,61 @@ export function HomeTab() {
   const open = (disputes.data?.items || []).filter(d => d.status === 'open');
   const o = ov.data;
   const max = Math.max(1, ...(o?.week.days.map(d => d.amount) || [0]));
+  const handle = name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'yourbusiness';
   return (
     <TabPage root={root} header={
       <header className="home-header">
         <span className="avatar small">{initials(name)}</span>
-        <div><Text size="small" color="surface.text.gray.muted">{greeting()}</Text><Text size="large" weight="semibold">{name.toUpperCase()}</Text></div>
+        <div><span className="hh-greet">{greeting()}</span><span className="hh-name">{name.toUpperCase()}</span></div>
       </header>}>
       {open.slice(0, 2).map(d => <DisputeAlert key={d.id} d={d} />)}
       <PushPrompt />
       {ov.isPending ? <Loading /> : ov.isError ? <Failed error={ov.error} retry={() => void ov.refetch()} /> : o && <>
-        <div className="card center">
-          <Text color="surface.text.gray.muted">Collected today</Text>
+        <div className="card center today">
+          <span className="t-label">Collected today</span>
           <span className="big-amount">{inr(o.collected_today.amount)}</span>
-          <button className="pill" onClick={() => setBreakdown(x => !x)}>View breakdown ({o.collected_today.count} payment{o.collected_today.count === 1 ? '' : 's'}) {breakdown ? <ChevronUpIcon size="small" color="surface.icon.gray.normal" /> : <ChevronDownIcon size="small" color="surface.icon.gray.normal" />}</button>
+          <button className="pill" onClick={() => setBreakdown(x => !x)}>View breakdown ({o.collected_today.count} payment{o.collected_today.count === 1 ? '' : 's'}) {breakdown ? <ChevronUpIcon size="medium" color="surface.icon.gray.normal" /> : <ChevronDownIcon size="medium" color="surface.icon.gray.normal" />}</button>
           {breakdown && <div className="breakdown">{o.collected_today.by_method.length ? o.collected_today.by_method.map(m => (
             <div key={m.method} className="kv"><Text size="small" color="surface.text.gray.muted">{METHOD[m.method] || m.method}</Text><Text size="small" weight="semibold">{inr(m.amount)}</Text></div>
           )) : <Text size="small" color="surface.text.gray.muted">No payments today</Text>}</div>}
           <div className="split">
-            <div><Text size="small" color="surface.text.gray.muted">Last settlement</Text>
-              <Text weight="semibold">{o.last_settlement ? `${o.last_settlement.amount_display} · ${paymentDate(o.last_settlement.created_at)}` : 'No settlements yet'}</Text></div>
-            <div><Text size="small" color="surface.text.gray.muted">Open disputes</Text><Text size="large" weight="semibold">{String(o.disputes_open)}</Text>
-              <Text size="xsmall" color="surface.text.gray.muted">{o.disputes_open ? 'Need a response' : 'All clear'}</Text></div>
+            <div><span className="t-small">Next settlement</span>
+              <span className="t-strong">{o.last_settlement && o.last_settlement.status !== 'processed' ? `${o.last_settlement.amount_display} · ${paymentDate(o.last_settlement.created_at)}` : 'No pending settlement'}</span></div>
+            <div><span className="t-small">Account balance</span><span className="t-balance">{inr(o.balance ?? 0)}</span>
+              <span className="t-tiny">After fees &amp; adjustments</span></div>
           </div>
         </div>
         <div className="collect">
-          <Text size="large" weight="semibold">Collect payments</Text>
+          <span className="sec-title">Collect payments</span>
           <div className="mylink">
             <LinkIcon size="medium" color="surface.icon.staticWhite.normal" />
-            <div><span className="mylink-sub">Get paid on your branded Razorpay link</span><span className="mylink-url">razorpay.me/@{name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'yourbusiness'}</span></div>
-            <span className="share"><ShareIcon size="small" color="surface.icon.gray.normal" /> Share</span>
+            <div><span className="mylink-sub">Get paid on your branded Razorpay link</span><span className="mylink-url">razorpay.me/@{handle}</span></div>
+            <span className="share"><ShareIcon size="medium" color="surface.icon.gray.normal" /> Share</span>
           </div>
           <div className="quick">
-            {[{ i: PaymentLinksIcon, t: 'Payment links' }, { i: PaymentPagesIcon, t: 'Payment pages' }, { i: GridIcon, t: 'All products' }].map(q => (
-              <button key={q.t} className="quick-item" onClick={() => navigate(`${root}/products`)}>
-                <span className="quick-icon"><q.i size="xlarge" color="surface.icon.primary.normal" /></span><Text size="small" weight="semibold">{q.t}</Text>
+            {[{ i: PaymentLinksIcon, t: ['Payment', 'links'] }, { i: PaymentPagesIcon, t: ['Payment', 'pages'] }, { i: GridIcon, t: ['All', 'products'] }].map(q => (
+              <button key={q.t.join(' ')} className="quick-item" onClick={() => navigate(`${root}/products`)}>
+                <span className="quick-icon"><span className="qi"><q.i size="xlarge" color="surface.icon.primary.normal" /></span></span>
+                <span className="quick-label">{q.t[0]}<br />{q.t[1]}</span>
               </button>
             ))}
           </div>
         </div>
-        <Text size="large" weight="semibold">Payments</Text>
-        <div className="card">
-          <div className="row-head"><div><span className="mid-amount">{inr(o.week.amount)}</span><Text color="surface.text.gray.muted">{o.week.count} payment{o.week.count === 1 ? '' : 's'}</Text></div><span className="chip">Past 7 days</span></div>
+        <span className="sec-title">Payments</span>
+        <div className="card week">
+          <div className="row-head"><div><span className="mid-amount">{inr(o.week.amount)}</span><span className="t-sub">{o.week.count} payment{o.week.count === 1 ? '' : 's'}</span></div>
+            <button className="range" onClick={() => navigate(`${root}/payments`)}>Past 7 days <ChevronDownIcon size="medium" color="surface.icon.gray.normal" /></button></div>
           <div className="bars" role="img" aria-label="Captured amount per day, past 7 days">
             {o.week.days.map(d => (
               <div key={d.date} className="bar-col" title={`${shortInr(d.amount)} · ${d.count}`}>
-                <span className="bar" style={{ height: `${Math.max(3, (d.amount / max) * 100)}%`, opacity: d.amount ? 1 : 0.25 }} />
+                <span className={`bar ${d.amount ? '' : 'bar-zero'}`} style={{ height: d.amount ? `${Math.max(6, (d.amount / max) * 100)}%` : undefined }} />
               </div>
             ))}
           </div>
-          <div className="bar-axis">{[0, 3, 6].map(i => <Text key={i} size="small" color="surface.text.gray.muted">{new Date(o.week.days[i]!.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</Text>)}</div>
+          <div className="bar-axis">{[0, 3, 6].map(i => <span key={i}>{new Date(o.week.days[i]!.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>)}</div>
         </div>
-        <div className="row-head"><Text size="large" weight="semibold">Recent payments</Text><Link to={`${root}/payments`} className="see-all">See all</Link></div>
-        <div className="card list">{o.recent.length ? o.recent.map(p => <PaymentRow key={p.id} p={p} />) : <div className="pay-row"><Text color="surface.text.gray.muted">No payments yet</Text></div>}</div>
+        <div className="row-head"><span className="sec-title">Recent payments</span><Link to={`${root}/payments`} className="see-all">See all</Link></div>
+        <div className="card list">{o.recent.length ? o.recent.map(p => <PaymentRow key={p.id} p={p} />) : <div className="pay-row empty-row">No payments yet</div>}</div>
       </>}
     </TabPage>
   );
@@ -151,37 +154,72 @@ export function HomeTab() {
 
 /* ---------------- Payments ---------------- */
 
+const RANGES = [{ v: 1, t: 'Today' }, { v: 7, t: 'Past 7 days' }, { v: 30, t: 'Past 30 days' }, { v: 90, t: 'Past 90 days' }];
+
+function RangeChip({ days, setDays }: { days: number; setDays: (n: number) => void }) {
+  return (
+    <label className="chip select-chip">
+      <CalendarIcon size="medium" color="surface.icon.gray.normal" />
+      <span>{RANGES.find(r => r.v === days)?.t}</span>
+      <ChevronDownIcon size="medium" color="surface.icon.gray.normal" />
+      <select value={days} onChange={e => setDays(Number(e.target.value))} aria-label="Date range">
+        {RANGES.map(r => <option key={r.v} value={r.v}>{r.t}</option>)}
+      </select>
+    </label>
+  );
+}
+
 export function PaymentsTab() {
   const { merchant, base: root } = useApp();
   const [tab, setTab] = useState<'tx' | 'st'>('tx');
   const [days, setDays] = useState(7);
   const [draft, setDraft] = useState('');
   const [q, setQ] = useState('');
+  const [status, setStatus] = useState<'all' | 'processed' | 'created' | 'failed'>('all');
   const pays = useMerchant(['payments', days, q], s => merchant.payments(days, q, s));
   const stl = useMerchant(['settlements', days], s => merchant.settlements(days, s), 60_000);
   const submit = (e: FormEvent) => { e.preventDefault(); setQ(draft.trim()); };
+  const stItems = stl.data?.items || [];
+  const count = (k: string) => (k === 'all' ? stItems.length : stItems.filter(x => x.status === k).length);
+  const shown = status === 'all' ? stItems : stItems.filter(x => x.status === status);
+  const pending = stItems.find(x => x.status === 'created');
   return (
     <TabPage root={root} header={
       <div className="seg">
         <button className={tab === 'tx' ? 'on' : ''} onClick={() => setTab('tx')}>Transactions</button>
         <button className={tab === 'st' ? 'on' : ''} onClick={() => setTab('st')}>Settlements</button>
       </div>}>
-      <div className="chips">
-        {[1, 7, 30].map(n => <button key={n} className={`chip filter ${days === n ? 'on' : ''}`} onClick={() => setDays(n)}>{n === 1 ? 'Today' : `Past ${n} days`}</button>)}
-      </div>
       {tab === 'tx' ? <>
         <form className="search" onSubmit={submit}>
-          <SearchIcon size="medium" color="surface.icon.gray.muted" />
+          <SearchIcon size="large" color="surface.icon.gray.muted" />
           <input value={draft} onChange={e => setDraft(e.target.value)} placeholder="Search by payment ID, phone, email or note" aria-label="Search payments" />
         </form>
+        <div className="chips">
+          <RangeChip days={days} setDays={setDays} />
+          <span className="chip"><FilterIcon size="medium" color="surface.icon.gray.normal" /> Filters</span>
+          <span className="chip chip-right"><DownloadIcon size="medium" color="surface.icon.gray.normal" /> Reports</span>
+        </div>
         {pays.isPending ? <Loading /> : pays.isError ? <Failed error={pays.error} retry={() => void pays.refetch()} />
           : pays.data.items.length ? <div className="card list">{pays.data.items.map(p => <PaymentRow key={p.id} p={p} />)}</div>
-          : <Empty icon={CreditCardIcon} title="No payments" sub="Try a wider date range or clear the search." />}
-      </> : stl.isPending ? <Loading /> : stl.isError ? <Failed error={stl.error} retry={() => void stl.refetch()} />
-        : stl.data.items.length ? <div className="card list">{stl.data.items.map(s => (
-          <div key={s.id} className="pay-row"><div className="pay-main"><Text weight="semibold">{s.amount_display}</Text><Text size="small" color="surface.text.gray.muted">{s.utr || s.id} · {time(s.created_at)}</Text></div>
-            <Badge color={s.status === 'processed' ? 'positive' : s.status === 'failed' ? 'negative' : 'neutral'} emphasis="subtle" size="small">{s.status}</Badge></div>
-        ))}</div> : <Empty icon={BankIcon} title="No settlements in this range" sub="Test-mode payments don't settle to a bank account." />}
+          : <Empty icon={TransactionsIcon} title="No payments" sub="Try a wider date range or clear filters." />}
+      </> : <>
+        <div className="card next-stl">
+          <span className="eyebrow">NEXT SETTLEMENT</span>
+          <span className="t-strong big">{pending ? pending.amount_display : 'No pending settlement'}</span>
+          <span className="t-small">{pending ? `Created ${time(pending.created_at)}` : 'New payments auto-settle'}</span>
+        </div>
+        <div className="row-head"><span className="sec-title">Past settlements</span><RangeChip days={days} setDays={setDays} /></div>
+        <div className="chips scroll">
+          {(['all', 'processed', 'created', 'failed'] as const).map(k => (
+            <button key={k} className={`chip filter ${status === k ? 'on' : ''}`} onClick={() => setStatus(k)}>{k[0]!.toUpperCase() + k.slice(1)} {count(k)}</button>
+          ))}
+        </div>
+        {stl.isPending ? <Loading /> : stl.isError ? <Failed error={stl.error} retry={() => void stl.refetch()} />
+          : shown.length ? <div className="card list">{shown.map(x => (
+            <div key={x.id} className="pay-row"><div className="pay-main"><Text weight="semibold">{x.amount_display}</Text><Text size="small" color="surface.text.gray.muted">{x.utr || x.id} · {time(x.created_at)}</Text></div>
+              <Badge color={x.status === 'processed' ? 'positive' : x.status === 'failed' ? 'negative' : 'neutral'} emphasis="subtle" size="small">{x.status}</Badge></div>
+          ))}</div> : <Empty icon={BankIcon} title="No settlements in this range" sub="Try selecting a different date range." />}
+      </>}
     </TabPage>
   );
 }
@@ -291,7 +329,7 @@ export function ProductsTab() {
   );
   const pl = q.data?.payment_links, inv = q.data?.invoices;
   return (
-    <TabPage root={root} title="Products">
+    <TabPage root={root} header={<header className="page-header plain"><span className="page-title big">Products</span></header>}>
       <Text size="small" weight="semibold" color="surface.text.gray.subtle">SHARE AND COLLECT</Text>
       <div className="tiles">
         {tile(PaymentLinksIcon as never, 'Payment links', 'Collect payments instantly by sharing a simple link', pl ? `${pl.count} created · ${pl.paid} paid` : null)}
@@ -378,14 +416,20 @@ export function AccountTab() {
     <TabPage root={root} title="Account and settings">
       <div className="card profile">
         <div className="profile-top"><span className="avatar">{initials(name)}</span><div><Text size="large" weight="semibold">{name.toUpperCase()}</Text><Text color="surface.text.gray.muted">Owner</Text></div></div>
-        {prof.data?.key_id_hint && <div className="mid-box"><Text size="small" color="surface.text.gray.muted">API key (test mode)</Text><span className="mono">{prof.data.key_id_hint}</span></div>}
+        {prof.data && <div className="mid-box"><Text size="small" color="surface.text.gray.muted">Merchant ID</Text>
+          <button className="copy" onClick={() => void navigator.clipboard?.writeText(prof.data!.merchant_id)} aria-label="Copy merchant ID"><span className="mono strong">{prof.data.merchant_id}</span><CopyIcon size="medium" color="surface.icon.gray.normal" /></button></div>}
       </div>
       <div className="card list">
         {rows.map(([Icon, t, s, go]) => (
           <button key={t} className="setting" onClick={go} disabled={!go}><span className="setting-icon"><Icon size="large" color="surface.icon.gray.normal" /></span><div><Text weight="semibold">{t}</Text><Text size="small" color="surface.text.gray.muted">{s}</Text></div><ChevronRightIcon size="medium" color="surface.icon.gray.normal" /></button>
         ))}
       </div>
-      <div className="card list"><button className="setting" onClick={() => navigate(`${root}/support`)}><HelpCircleIcon size="large" color="surface.icon.gray.normal" /><div><Text>Support</Text></div><ChevronRightIcon size="medium" color="surface.icon.gray.normal" /></button></div>
+      <div className="card list">
+        <button className="setting compact" onClick={() => navigate(`${root}/support`)}><HelpCircleIcon size="large" color="surface.icon.gray.normal" /><div><Text>Support</Text></div><ChevronRightIcon size="medium" color="surface.icon.gray.normal" /></button>
+        <button className="setting compact" disabled><FileIcon size="large" color="surface.icon.gray.normal" /><div><Text>Terms &amp; Conditions</Text></div><ChevronRightIcon size="medium" color="surface.icon.gray.normal" /></button>
+        <button className="setting compact" disabled><ShieldIcon size="large" color="surface.icon.gray.normal" /><div><Text>Privacy Policy</Text></div><ChevronRightIcon size="medium" color="surface.icon.gray.normal" /></button>
+        <button className="setting compact" disabled><GlobeIcon size="large" color="surface.icon.gray.normal" /><div><Text>About Us</Text></div><ChevronRightIcon size="medium" color="surface.icon.gray.normal" /></button>
+      </div>
     </TabPage>
   );
 }

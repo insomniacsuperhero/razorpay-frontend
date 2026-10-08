@@ -206,3 +206,81 @@ button.setting + button.setting { border-top: 1px solid #eef1f5; }
 .push-prompt .row-head { align-items: flex-start; justify-content: flex-start; gap: 12px; }
 .push-prompt-icon { width: 40px; height: 40px; border-radius: 12px; background: #e3edfe; display: grid; place-items: center; flex: none; }
 .push-prompt-text { display: flex; flex-direction: column; gap: 2px; }
+
+/* ---------- match the Razorpay merchant app (measured from screenshots) ---------- */
+.app { background: #f7f8fa; }
+.tab-content { padding: 16px 16px 24px; gap: 14px; }
+.card { border-radius: 18px; border-color: #e1e5eb; }
+.home-header { gap: 10px; padding: 12px 20px 12px; border-bottom: 1px solid #f0f2f5; box-shadow: 0 1px 6px #0b1d3d08; }
+.avatar.small { width: 36px; height: 36px; font-size: 13px; font-weight: 600; background: #eef3fb; border: 1px solid #dfe6f1; color: #1b2b44; }
+.hh-greet { font-size: 13px; color: #6b7685; line-height: 18px; }
+.hh-name { font-size: 16px; font-weight: 600; color: #0f1b2d; letter-spacing: 0.1px; line-height: 21px; }
+.card.today { padding: 14px 12px 10px; gap: 8px; }
+.t-label { font-size: 14px; color: #5e6b7c; }
+.big-amount { font-size: 34px; font-weight: 700; letter-spacing: -0.4px; line-height: 1.1; color: #0f1b2d; }
+button.pill, .pill { background: #eef0f3; color: #1b2b44; font-size: 13.5px; font-weight: 500; padding: 7px 14px; gap: 6px; border-radius: 999px; font-family: inherit; }
+.split { margin-top: 4px; padding-top: 4px; }
+.split > div { padding: 8px 4px 6px; gap: 3px; justify-content: center; }
+.t-small { font-size: 12.5px; color: #5e6b7c; }
+.t-strong { font-size: 14.5px; font-weight: 600; color: #0f1b2d; }
+.t-balance { font-size: 20px; font-weight: 700; color: #0f1b2d; letter-spacing: -0.2px; }
+.t-tiny { font-size: 12px; color: #6b7685; }
+.t-sub { display: block; font-size: 14px; color: #6b7685; margin-top: 2px; }
+.sec-title { font-size: 17px; font-weight: 600; color: #0f1b2d; letter-spacing: -0.1px; }
+.collect { background: #e8f0fd; border-radius: 18px; padding: 16px 16px 14px; gap: 12px; }
+.mylink { background: #0a2257; border-radius: 12px; padding: 10px 8px 10px 14px; gap: 10px; }
+.mylink-sub { font-size: 11px; color: #9fb0cf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mylink-url { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.share { padding: 7px 12px; font-size: 14px; font-weight: 500; border-radius: 9px; box-shadow: 0 2px 0 #c9cfd8; flex: none; }
+.quick { gap: 4px; padding-top: 2px; }
+.quick-icon { width: 60px; height: 60px; border-radius: 14px; }
+.qi { display: inline-flex; transform: scale(1.15); }
+.quick-label { font-size: 12.5px; font-weight: 600; line-height: 15px; color: #0f1b2d; }
+.card.week { padding: 16px 18px 12px; gap: 0; }
+.mid-amount { font-size: 22px; font-weight: 600; color: #0f1b2d; letter-spacing: -0.2px; }
+.range { display: inline-flex; align-items: center; gap: 4px; background: #fff; border: 1px solid #d9dee6; border-radius: 999px; padding: 7px 10px 7px 14px; font: inherit; font-size: 14px; font-weight: 500; color: #0f1b2d; cursor: pointer; align-self: flex-start; }
+.bars { height: 110px; gap: 4px; margin-top: 18px; }
+.bar { background: #1566f1; border-radius: 3px 3px 0 0; }
+.bar.bar-zero { height: 4px; background: #e6e9ee; border-radius: 2px; }
+.bar-axis { margin-top: 8px; }
+.bar-axis span { font-size: 12px; color: #8a94a3; }
+.see-all { font-size: 15px; font-weight: 500; color: #1566f1; }
+.empty-row { justify-content: center; color: #6b7685; font-size: 14px; padding: 18px 0; }
+.tabbar { padding: 8px 2px calc(8px + env(safe-area-inset-bottom)); border-top-color: #eceff3; }
+.tab { font-size: 11.5px; font-weight: 500; color: #1b2b44; gap: 3px; }
+.tab.active { color: #1566f1; }
+.dispute-alert { border-radius: 16px; }
+.mylink { padding: 10px 8px 10px 12px; gap: 8px; }
+.mylink-sub { font-size: 10.5px; }
+.mylink-url { font-size: 13.5px; }
+.share { padding: 6px 10px; font-size: 13px; gap: 5px; }
+.seg button { font-size: 17px; font-weight: 500; padding: 18px 0 14px; }
+.search { border-radius: 12px; padding: 12px 14px; font-size: 15px; gap: 12px; border-color: #d9dee6; }
+.search input { font-size: 15px; }
+.search input::placeholder { color: #9aa4b2; }
+.chips { gap: 10px; align-items: center; }
+.chips.scroll { overflow-x: auto; padding-bottom: 2px; }
+.chip { font-size: 14px; font-weight: 500; padding: 8px 14px; border-color: #d9dee6; color: #0f1b2d; white-space: nowrap; gap: 8px; }
+.chip.filter.on { background: #eaf1fe; border: 1.5px solid #1566f1; color: #1566f1; }
+.select-chip { position: relative; cursor: pointer; }
+.select-chip select { position: absolute; inset: 0; opacity: 0; font-size: 16px; cursor: pointer; }
+.next-stl { gap: 4px; padding: 16px 18px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5e6b7c; }
+.t-strong.big { font-size: 19px; font-weight: 600; }
+.empty-card { padding: 24px 18px; gap: 6px; }
+.page-header { padding: 16px 20px; }
+.page-title { font-size: 22px; font-weight: 600; }
+.tile { border-radius: 18px; gap: 6px; }
+.tile-icon { background: #f1f3f6; }
+.setting-icon { background: #f3f6fb; border-radius: 12px; }
+.profile-top .avatar { width: 64px; height: 64px; font-size: 20px; background: #1554d1; color: #fff; border: 0; }
+.mid-box { border-radius: 12px; background: #f3f5f8; }
+.chip-right { margin-left: auto; }
+.split .t-strong { font-size: 14px; white-space: nowrap; }
+.qi { transform: scale(1.4); }
+.card.today { padding-top: 18px; }
+.page-header.plain { background: #f7f8fa; border-bottom: 0; padding: 22px 20px 4px; position: static; }
+.page-title.big { font-size: 28px; font-weight: 700; color: #0f1b2d; letter-spacing: -0.3px; }
+.copy { display: inline-flex; align-items: center; gap: 8px; background: none; border: 0; cursor: pointer; padding: 0; }
+.mono.strong { font-size: 14px; font-weight: 600; color: #0f1b2d; }
+.setting.compact { min-height: 54px; padding: 12px 0; }

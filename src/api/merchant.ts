@@ -12,7 +12,7 @@ export interface SettlementItem { id: string; amount: number; amount_display: st
 export interface Overview {
   collected_today: { amount: number; count: number; by_method: { method: string; amount: number }[] };
   week: { amount: number; count: number; days: { date: string; amount: number; count: number }[] };
-  recent: PaymentItem[]; last_settlement: SettlementItem | null; disputes_open: number; unread_notifications: number;
+  recent: PaymentItem[]; last_settlement: SettlementItem | null; balance?: number; disputes_open: number; unread_notifications: number;
 }
 export interface DisputeListItem {
   id: string; payment_id: string; status: string; amount: number; amount_display: string; reason_code: string;

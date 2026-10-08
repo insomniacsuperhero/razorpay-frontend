@@ -158,7 +158,7 @@ export function createFakeMerchant(detail: DisputeDetail): MerchantApi {
       const today = ps.filter(p => Date.parse(p.created_at) >= today0.getTime());
       return { collected_today: { amount: today.reduce((a, p) => a + p.amount, 0), count: today.length, by_method: [{ method: 'upi', amount: 129900 }, { method: 'card', amount: 59900 }].filter(m => today.some(p => p.method === m.method)) },
         week: { amount: days.reduce((a, d) => a + d.amount, 0), count: days.reduce((a, d) => a + d.count, 0), days },
-        recent: payments().slice(0, 5), last_settlement: null, disputes_open: detail.dispute.status === 'open' ? 1 : 0, unread_notifications: read ? 0 : 1 };
+        recent: payments().slice(0, 5), last_settlement: null, balance: ps.reduce((a, p) => a + p.amount - (p.fee || 0), 0), disputes_open: detail.dispute.status === 'open' ? 1 : 0, unread_notifications: read ? 0 : 1 };
     },
     payments: async (days: number, q: string) => ({ items: payments().filter(p => Date.parse(p.created_at) >= today0.getTime() - (days - 1) * day && (!q || p.id.includes(q) || (p.contact_masked || '').includes(q))) }),
     payment: async (id: string) => { const p = payments().find(x => x.id === id); if (!p) throw new Error('Payment not found'); return p; },
