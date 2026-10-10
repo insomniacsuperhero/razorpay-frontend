@@ -33,15 +33,21 @@ export function sampleDetail(scenario: string): DisputeDetail {
   };
 }
 
+/** Placeholder thumbnail for sample files (real disputes show the uploaded image). */
+const sampleImg = (bg: string, line1: string, line2: string) => 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><rect width="240" height="240" fill="${bg}"/>` +
+  `<rect x="24" y="40" width="192" height="160" rx="12" fill="#fff"/><text x="40" y="100" font-family="sans-serif" font-size="20" font-weight="700" fill="#1b2b44">${line1}</text>` +
+  `<text x="40" y="136" font-family="sans-serif" font-size="16" fill="#5b6b85">${line2}</text></svg>`);
+
 function sentCards(): EvidenceCard[] {
   const base = { status: 'ready' as const, stage_index: 5, detected_mime_type: 'image/jpeg', mismatches: [], facts: [] };
   return [
     { ...base, id: 'ev_s1', filename: 'delhivery.jpg', document_type: 'Courier tracking screenshot', field: 'shipping_proof', field_label: 'Delivery confirmation',
-      verdict: 'strong', reason: 'Delivery status and tracking ID are readable, and the date matches the order.', razorpay_document_id: 'doc_Sample1' },
+      verdict: 'strong', reason: 'Delivery status and tracking ID are readable, and the date matches the order.', razorpay_document_id: 'doc_Sample1', preview_url: sampleImg('#dbe9ff', 'Delhivery', 'Delivered · 7 Oct') },
     { ...base, id: 'ev_s2', filename: 'whatsapp-chat.png', document_type: 'WhatsApp chat with customer', field: 'customer_communication', field_label: 'Customer communication',
-      verdict: 'relevant', reason: 'The customer says "received, thanks" on 7 Oct.', razorpay_document_id: 'doc_Sample2' },
+      verdict: 'relevant', reason: 'The customer says "received, thanks" on 7 Oct.', razorpay_document_id: 'doc_Sample2', preview_url: sampleImg('#dcf5e6', 'WhatsApp', 'Received, thanks') },
     { ...base, id: 'ev_s3', filename: 'product.jpg', document_type: 'Product photo', field: 'none', field_label: 'Not used',
-      verdict: 'not_useful', reason: "This product photo doesn't confirm delivery.", razorpay_document_id: null },
+      verdict: 'not_useful', reason: "This product photo doesn't confirm delivery.", razorpay_document_id: null, preview_url: sampleImg('#f3eadf', 'Product', 'Kurta, blue') },
   ];
 }
 
