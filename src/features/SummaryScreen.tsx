@@ -6,7 +6,7 @@ import {
 } from '@razorpay/blade/components';
 import { ApiError } from '../api/client';
 import type { CoverageItem } from '../api/types';
-import { KV, Panel, Screen, Section, State } from '../components/ui';
+import { KV, Panel, Screen, Section, SkeletonBlock, SrOnly, State } from '../components/ui';
 import { elapsed, newKey, useNow } from '../lib/format';
 import { useWorkspace } from './workspace';
 
@@ -55,7 +55,13 @@ export function SummaryScreen() {
     } finally { setBusy(null); setConfirm(false); }
   }
 
-  if (cov.isPending) return <Screen title="Summary" back={`${root}/review`}><State title="Checking coverage" busy /></Screen>;
+  if (cov.isPending) return (
+    <Screen title="Summary" back={`${root}/review`} step="Step 3 of 3 · Approve">
+      <SkeletonBlock lines={4} label="Checking which proof is covered" />
+      <SkeletonBlock lines={5} label="Drafting your summary from the evidence" />
+      <Text size="small" color="surface.text.gray.muted">Checking your proof against what this dispute needs and drafting the summary.</Text>
+    </Screen>
+  );
   if (cov.isError) return <Screen title="Summary" back={`${root}/review`}><State title="Could not load the summary" onRetry={() => void cov.refetch()}>{cov.error.message}</State></Screen>;
 
   const c = cov.data;
@@ -75,7 +81,7 @@ export function SummaryScreen() {
       }>
       <Section title="Coverage" aside={<Badge color={LABEL_COLOR[c.label] || 'notice'} emphasis="subtle">{c.label}</Badge>}>
         <Panel>
-          <ul className="checklist">
+          <ul className="checklist" aria-label="Proof this dispute needs">
             {c.required.map(i => <CheckRow key={i.field} item={i} />)}
             {c.helpful.map(i => <CheckRow key={i.field} item={i} optional />)}
           </ul>
@@ -98,13 +104,14 @@ export function SummaryScreen() {
         <KV label="Files to send" value={`${docs} across ${fieldCount} field${fieldCount === 1 ? '' : 's'}`} />
       </Panel>
       <Text size="small" weight="semibold" color="surface.text.gray.subtle">Nothing is sent until you approve.</Text>
-      {notice && <Alert color="positive" description={notice} isDismissible={false} isFullWidth />}
-      {error && <Alert color="negative" description={error} isDismissible={false} isFullWidth />}
+      <SrOnly role="status" aria-live="polite">{saving === 'saving' ? 'Saving your summary' : saving === 'saved' ? 'Summary saved' : ''}</SrOnly>
+      <div role="status" aria-live="polite">{notice && <Alert color="positive" description={notice} isDismissible={false} isFullWidth />}</div>
+      <div role="alert">{error && <Alert color="negative" description={error} isDismissible={false} isFullWidth />}</div>
 
       <BottomSheet isOpen={confirm} onDismiss={() => setConfirm(false)}>
         <BottomSheetHeader title="Send this response to the bank?" />
         <BottomSheetBody>
-          <div className="confirm-list">
+          <div className="confirm-list" tabIndex={0} role="region" aria-label="What will be sent to the bank">
             <KV label="Files" value={`${docs} across ${fieldCount} field${fieldCount === 1 ? '' : 's'}`} />
             <div className="confirm-fields">{fieldNames.map(f => <code key={f}>{f}</code>)}</div>
             <KV label="Amount contested" value={data.dispute.amount_display} />
@@ -129,7 +136,7 @@ function CheckRow({ item, optional }: { item: CoverageItem; optional?: boolean }
   const ok = item.state !== 'missing';
   return (
     <li className="check">
-      {ok ? <CheckCircleIcon size="medium" color="feedback.icon.positive.intense" /> : <CircleIcon size="medium" color="surface.icon.gray.muted" />}
+      <span aria-hidden="true">{ok ? <CheckCircleIcon size="medium" color="feedback.icon.positive.intense" /> : <CircleIcon size="medium" color="surface.icon.gray.muted" />}</span>
       <Text size="medium" weight={ok ? 'semibold' : 'regular'} color={ok ? 'surface.text.gray.normal' : 'surface.text.gray.muted'}>{item.label}</Text>
       <span className="check-state">
         <Text size="xsmall" color={ok ? (item.state === 'strong' ? 'feedback.text.positive.intense' : 'surface.text.gray.subtle') : optional ? 'surface.text.gray.muted' : 'feedback.text.notice.intense'}>

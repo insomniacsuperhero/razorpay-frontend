@@ -62,18 +62,20 @@ export function EvidenceFile({ card: c, compact, hideVerdict }: { card: Evidence
       {!compact && !!c.facts?.length && (
         <dl className="facts">
           {c.facts.map(f => editing === f.key
-            ? <FactEditor key={f.key} fact={f} busy={busy === 'fact'} onCancel={() => setEditing(null)}
-                onSave={value => patch('fact', { fact_key: f.key, value }).then(() => setEditing(null))} />
+            ? <div key={f.key} className="fact-editing"><dt className="sr-only">{f.label}</dt><dd><FactEditor fact={f} busy={busy === 'fact'} onCancel={() => setEditing(null)}
+                onSave={value => patch('fact', { fact_key: f.key, value }).then(() => setEditing(null))} /></dd></div>
             : <FactRow key={f.key} fact={f} mismatch={mismatchFor(f.key)?.message} expected={mismatchFor(f.key)?.expected} onEdit={() => setEditing(f.key)} />)}
-          <Text size="xsmall" color="surface.text.gray.muted">From {c.filename}</Text>
         </dl>
+      )}
+      {!compact && !!c.facts?.length && (
+        <Text size="xsmall" color="surface.text.gray.muted">From {c.filename}</Text>
       )}
 
       {c.razorpay_document_id && !compact && (
         <Text size="xsmall" color="surface.text.gray.muted">Saved to Razorpay as <span className="mono">{c.razorpay_document_id}</span> · not sent until you submit</Text>
       )}
 
-      {error && <Text size="small" color="feedback.text.negative.intense">{error}</Text>}
+      <div role="alert">{error && <Text size="small" color="feedback.text.negative.intense">{error}</Text>}</div>
 
       <div className="row-actions">
         {c.status === 'failed' && <Button size="small" variant="secondary" icon={RefreshIcon} isLoading={busy === 'retry'} onClick={() => act('retry', () => api.retryEvidence(c.id))}>Try again</Button>}
@@ -104,7 +106,7 @@ function FactRow({ fact, mismatch, expected, onEdit }: { fact: EvidenceFact; mis
         </span>
         {mismatch && <Text size="xsmall" color="feedback.text.notice.intense">{mismatch}{expected ? ` Payment: ${String(expected)}.` : ''}</Text>}
       </dd>
-      <IconButton icon={EditIcon} size="small" accessibilityLabel={`Correct ${fact.label}`} onClick={onEdit} />
+      <dd className="fact-action"><IconButton icon={EditIcon} size="medium" accessibilityLabel={`Correct ${fact.label}`} onClick={onEdit} /></dd>
     </div>
   );
 }

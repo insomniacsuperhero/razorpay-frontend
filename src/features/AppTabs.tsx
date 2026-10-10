@@ -5,11 +5,12 @@ import { useQuery, type QueryKey } from '@tanstack/react-query';
 import {
   AlertTriangleIcon, ArrowLeftIcon, BankIcon, Badge, BellIcon, Button, CheckCircleIcon, ChevronDownIcon, ChevronRightIcon,
   CalendarIcon, ChevronUpIcon, CopyIcon, ShieldIcon, CreditCardIcon, DownloadIcon, FileIcon, FilterIcon, GlobeIcon, TransactionsIcon, GridIcon, HelpCircleIcon, IconButton, InvoicesIcon, LinkIcon,
-  MailIcon, MessageCircleIcon, PaymentLinksIcon, PaymentPagesIcon, QRCodeIcon, RayIcon, SearchIcon, ShareIcon, Spinner, Text,
+  MailIcon, MessageCircleIcon, PaymentLinksIcon, PaymentPagesIcon, QRCodeIcon, RayIcon, SearchIcon, ShareIcon, Text,
 } from '@razorpay/blade/components';
 import { ApiError } from '../api/client';
 import type { DisputeListItem, NotificationItem, PaymentItem } from '../api/merchant';
 import { initials, MERCHANT_NAME, TabPage } from '../components/AppShell';
+import { SkeletonBlock } from '../components/ui';
 import { deadlineParts, METHOD, paymentDate, useNow } from '../lib/format';
 import { disputeHref, useApp } from './app';
 import { PhoneNotificationsRow, PushPrompt } from './PhoneNotifications';
@@ -29,7 +30,7 @@ const shortInr = (paise: number) => `₹${(paise / 100).toLocaleString('en-IN', 
 const time = (iso: string) => new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; };
 
-function Loading() { return <div className="card center empty-card"><Spinner accessibilityLabel="Loading" size="large" /></div>; }
+function Loading() { return <SkeletonBlock lines={4} />; }
 function Failed({ error, retry }: { error: Error; retry: () => void }) {
   return <div className="card center empty-card"><Text weight="semibold">Couldn't load this</Text><Text size="small" color="surface.text.gray.muted">{error.message}</Text><Button size="small" variant="secondary" onClick={retry}>Try again</Button></div>;
 }
@@ -367,7 +368,7 @@ export function SupportTab() {
     <TabPage root={base} flush header={
       <header className="ray-header"><RayIcon size="large" color="surface.icon.staticWhite.normal" /><Text weight="semibold" color="surface.text.staticWhite.normal">RAY</Text><span className="concept">Concept</span></header>}>
       <div className="chat">
-        {disputes.isPending && <Spinner accessibilityLabel="Loading" />}
+        {disputes.isPending && <span className="typing" role="status">RAY is checking your disputes<span className="typing-dots" aria-hidden="true" /></span>}
         {!disputes.isPending && !open.length && <div className="bubble ray"><Text>No disputes need a response right now. I'll message you here and on WhatsApp the moment a customer raises one.</Text></div>}
         {open.map(d => {
           const dl = deadlineParts(d.respond_by_iso, now);
@@ -385,7 +386,7 @@ export function SupportTab() {
         })}
         {asked && <>
           <div className="bubble me"><Text>What was this payment?</Text></div>
-          <div className="bubble ray">{payment.isPending ? <Spinner accessibilityLabel="Loading" size="medium" /> : p
+          <div className="bubble ray">{payment.isPending ? <span className="typing" role="status">Looking up this payment<span className="typing-dots" aria-hidden="true" /></span> : p
             ? <Text>{`${p.amount_display} by ${METHOD[p.method] || p.method} on ${paymentDate(p.created_at)}${p.order_ref ? `, order ${p.order_ref}` : ''}${p.contact_masked ? `, from ${p.contact_masked}` : ''}. Payment ID ${p.id}.`}</Text>
             : <Text>I couldn't find that payment.</Text>}</div>
         </>}

@@ -1,15 +1,24 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BladeProvider } from '@razorpay/blade/components';
-import { bladeTheme } from '@razorpay/blade/tokens';
+import { BladeProvider, Skeleton, Text } from '@razorpay/blade/components';
+import { bladeTheme as baseTheme } from '@razorpay/blade/tokens';
+
+/** WCAG 1.4.3: Blade's orange "notice" text (#c75300) is 4.0–4.3:1 on its light badge and card
+ *  backgrounds. One darker shade of the same hue (#a84700, 5.3–5.9:1) fixes every badge, deadline
+ *  and "Needed" label at once without changing the look. */
+const bladeTheme = (() => {
+  const t = structuredClone(baseTheme);
+  t.colors.onLight.feedback.text.notice.intense = 'hsla(25, 100%, 33%, 1)';
+  return t;
+})();
 import { ApiError } from './api/client';
 import { createDisputeApi, type DisputeApi } from './api/workflow';
 import { createMerchantApi, type MerchantApi } from './api/merchant';
 import { clearSession, exchangeLink, openSession, readSession } from './auth/session';
 import type { Session } from './api/types';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { State } from './components/ui';
+import { Screen, SkeletonBlock, State, useSlow } from './components/ui';
 import { DisputeScreen } from './features/DisputeScreen';
 import { CheckingScreen } from './features/CheckingScreen';
 import { ReviewScreen } from './features/ReviewScreen';
@@ -65,7 +74,7 @@ function SessionGate({ initialLinkToken }: { initialLinkToken: string | null }) 
     return () => clearTimeout(t);
   }, [session, expire]);
   const merchant = useMemo(() => createMerchantApi(session?.access_token || ''), [session?.access_token]);
-  if (busy) return <State title="Opening your account" busy>Connecting to Razorpay. The service may take a moment to wake up.</State>;
+  if (busy) return <State title="Opening your account" busy slowText="Still connecting. The server sleeps when it's idle and can take up to 30 seconds to wake up. You don't need to do anything.">Connecting to Razorpay securely.</State>;
   if (error) {
     const auth = error instanceof ApiError && error.isAuth;
     if (auth && !initialLinkToken) return <SignedOut/>;
@@ -122,7 +131,7 @@ export function DisputeWorkspace({ id, api, merchant, root, expire, preview }: W
     timerStarted.current = true;
     api.startTimer().then(refresh).catch(() => { timerStarted.current = false; });
   }, [api, refresh]);
-  if (query.isPending) return <State title="Getting the latest dispute" busy>Checking the dispute and its payment details securely.</State>;
+  if (query.isPending) return <DisputeLoading />;
   if (query.isError) return <State title={query.error instanceof ApiError && query.error.status === 404 ? 'Dispute not found' : 'Could not load the dispute'} onRetry={() => { void query.refetch(); }}>{query.error.message}</State>;
   const ws = { data: query.data, api, merchant, root, refreshing: query.isFetching, preview, onAuthError: expire, openProofSheet: () => setSheet(true), startTimer, refresh };
   return <WorkspaceContext.Provider value={ws}><UploadProvider api={api} onAuthError={expire}>
@@ -135,4 +144,22 @@ export function DisputeWorkspace({ id, api, merchant, root, expire, preview }: W
     </Routes>
     <AddProofSheet isOpen={sheet} onDismiss={() => setSheet(false)}/>
   </UploadProvider></WorkspaceContext.Provider>;
+}
+
+/** Shaped like the dispute screen, so the layout doesn't jump and the wait reads as "almost here". */
+function DisputeLoading() {
+  const slow = useSlow(6000);
+  return (
+    <Screen title="Dispute">
+      <div className="hero" aria-hidden="true">
+        <Skeleton width="45%" height="12px" borderRadius="medium" />
+        <Skeleton width="35%" height="28px" borderRadius="medium" />
+        <Skeleton width="80%" height="16px" borderRadius="medium" />
+      </div>
+      <SkeletonBlock lines={4} label="Loading the dispute and its payment" />
+      <Text size="small" color="surface.text.gray.muted">
+        {slow ? "Still loading. The server can take up to 30 seconds to wake up after being idle." : 'Getting the dispute and its payment details from Razorpay.'}
+      </Text>
+    </Screen>
+  );
 }

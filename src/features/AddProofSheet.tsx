@@ -33,27 +33,27 @@ export function AddProofSheet({ isOpen, onDismiss }: { isOpen: boolean; onDismis
 
   return (
     <>
-      <input ref={camera} type="file" accept="image/*" capture="environment" hidden onChange={picked} data-testid="input-camera" />
-      <input ref={gallery} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={picked} data-testid="input-gallery" />
-      <input ref={files} type="file" accept=".pdf,.docx,application/pdf" multiple hidden onChange={picked} data-testid="input-file" />
+      <input ref={camera} type="file" accept="image/*" capture="environment" hidden aria-hidden="true" tabIndex={-1} onChange={picked} data-testid="input-camera" />
+      <input ref={gallery} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden aria-hidden="true" tabIndex={-1} onChange={picked} data-testid="input-gallery" />
+      <input ref={files} type="file" accept=".pdf,.docx,application/pdf" multiple hidden aria-hidden="true" tabIndex={-1} onChange={picked} data-testid="input-file" />
       <BottomSheet isOpen={isOpen} onDismiss={onDismiss} snapPoints={[0.5, 0.85, 0.95]}>
         <BottomSheetHeader title="Add proof" subtitle="Pick one or more. We'll sort them for you." />
         <BottomSheetBody>
           <div className="hint">
             <Text size="small" color="surface.text.gray.normal">{data.requirements.hint}</Text>
           </div>
-          <div className="source-list" role="list">
+          <ul className="source-list" aria-label="Where is your proof?">
             {options.map(o => (
-              <button key={o.title} className="source" role="listitem" onClick={() => o.ref.current?.click()}>
+              <li key={o.title}><button className="source" onClick={() => o.ref.current?.click()}>
                 <span className="source-icon"><o.icon size="large" color="surface.icon.primary.normal" /></span>
                 <span className="source-text">
                   <Text weight="semibold">{o.title}</Text>
                   <Text size="small" color="surface.text.gray.muted">{o.sub}</Text>
                 </span>
                 <ChevronRightIcon size="medium" color="surface.icon.gray.muted" />
-              </button>
+              </button></li>
             ))}
-          </div>
+          </ul>
           <div className="privacy">
             <LockIcon size="small" color="surface.icon.gray.muted" />
             <Text size="small" color="surface.text.gray.muted">Only the files you pick are read. Nothing else on your phone is accessed.</Text>

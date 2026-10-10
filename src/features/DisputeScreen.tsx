@@ -119,12 +119,12 @@ export function DisputeScreen() {
         </Panel>
       </Section>
 
-      <button className="details-toggle" onClick={() => setDetails(x => !x)} aria-expanded={details}>
+      <button className="details-toggle" onClick={() => setDetails(x => !x)} aria-expanded={details} aria-controls="dispute-details">
         <Text size="small" weight="semibold" color="surface.text.primary.normal">View details</Text>
         {details ? <ChevronUpIcon size="small" color="surface.icon.primary.normal" /> : <ChevronDownIcon size="small" color="surface.icon.primary.normal" />}
       </button>
       {details && (
-        <Panel tone="muted">
+        <Panel tone="muted" id="dispute-details">
           <KV label="Dispute ID" value={d.id} mono />
           <KV label="Reason code" value={d.reason_code} mono />
           <KV label="Phase" value={d.phase || 'chargeback'} />
@@ -136,7 +136,7 @@ export function DisputeScreen() {
         <BottomSheetHeader title="Accept this dispute?" />
         <BottomSheetBody>
           <Text>{d.amount_display} will be deducted from your settlements. This can't be undone.</Text>
-          {acceptError && <div className="gap-top"><Alert color="negative" description={acceptError} isDismissible={false} isFullWidth /></div>}
+          {acceptError && <div className="gap-top" role="alert"><Alert color="negative" description={acceptError} isDismissible={false} isFullWidth /></div>}
         </BottomSheetBody>
         <BottomSheetFooter>
           <div className="footer-stack">

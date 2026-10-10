@@ -69,7 +69,11 @@ export function ReviewScreen() {
 
       {processing.length > 0 && (
         <button className="processing-row" onClick={() => navigate(`${root}/checking`)}>
-          <Text size="small" weight="semibold" color="surface.text.primary.normal">Still checking {processing.length} file{processing.length === 1 ? '' : 's'} →</Text>
+          <span className="pulse-dot" aria-hidden="true" />
+          <span className="processing-text">
+            <Text size="small" weight="semibold" color="surface.text.primary.normal">Still checking {processing.length} file{processing.length === 1 ? '' : 's'}</Text>
+            <Text size="xsmall" color="surface.text.gray.muted">{processing.map(p => p.document_type || p.filename).join(', ')} · they'll appear here when ready. See progress →</Text>
+          </span>
         </button>
       )}
 
@@ -79,7 +83,7 @@ export function ReviewScreen() {
           <article key={g.key} className={`evidence-card ${flagged(g) ? 'is-flagged' : ''}`}>
             <header className="evidence-head">
               <div>
-                <Text weight="semibold" size="large">{g.label}</Text>
+                <h2 className="h-reset"><Text as="span" weight="semibold" size="large">{g.label}</Text></h2>
                 <div className="evidence-sub">
                   <FieldTag field={g.field} />
                   <Text size="xsmall" color="surface.text.gray.muted">{g.role === 'required' ? 'Required' : g.role === 'helpful' ? 'Helps' : 'Extra'}</Text>
@@ -94,7 +98,7 @@ export function ReviewScreen() {
 
       {failed.length > 0 && (
         <article className="evidence-card">
-          <header className="evidence-head"><Text weight="semibold" size="large">Couldn't read</Text></header>
+          <header className="evidence-head"><h2 className="h-reset"><Text as="span" weight="semibold" size="large">Couldn't read</Text></h2></header>
           {failed.map(c => <EvidenceFile key={c.id} card={c} />)}
         </article>
       )}
@@ -102,7 +106,7 @@ export function ReviewScreen() {
       {notUseful.length > 0 && (
         <article className="evidence-card is-muted">
           <header className="evidence-head">
-            <Text weight="semibold">Not useful for this dispute</Text>
+            <h2 className="h-reset"><Text as="span" weight="semibold">Not useful for this dispute</Text></h2>
           </header>
           {notUseful.map(c => <EvidenceFile key={c.id} card={c} compact />)}
         </article>

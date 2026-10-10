@@ -15,6 +15,8 @@ export interface Job {
   thumb: string | null;
   phase: 'preparing' | 'uploading' | 'reading' | 'done' | 'failed';
   progress: number;
+  /** When this attempt began, so the screen can say when a file is taking longer than usual. */
+  startedAt: number;
   evidenceId?: string;
   card?: EvidenceCard;
   error?: string;
@@ -58,11 +60,11 @@ export function UploadProvider({ api, children, onAuthError }: { api: DisputeApi
   const run = useCallback(async (job: Job) => {
     try {
       if (job.evidenceId) {                       // the file is already uploaded: just read it again
-        patch(job.key, { phase: 'reading', error: undefined });
+        patch(job.key, { phase: 'reading', error: undefined, startedAt: Date.now() });
         await api.retryEvidence(job.evidenceId);
         await poll(job.key, job.evidenceId);
       } else {
-        patch(job.key, { phase: 'preparing', error: undefined, progress: 0 });
+        patch(job.key, { phase: 'preparing', error: undefined, progress: 0, startedAt: Date.now() });
         const file = await prepareFile(job.file);
         fileMime(file);                             // clear message for HEIC, empty or oversized files
         patch(job.key, { phase: 'uploading' });
@@ -85,7 +87,7 @@ export function UploadProvider({ api, children, onAuthError }: { api: DisputeApi
     const fresh: Job[] = files.map(file => ({
       key: newKey(), file, name: file.name,
       thumb: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
-      phase: 'preparing', progress: 0,
+      phase: 'preparing', progress: 0, startedAt: Date.now(),
     }));
     setJobs(js => [...js, ...fresh]);
     fresh.forEach(j => void run(j));
