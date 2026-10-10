@@ -18,6 +18,8 @@ export interface DisputeListItem {
   id: string; payment_id: string; status: string; amount: number; amount_display: string; reason_code: string;
   reason_label: string; respond_by_iso: string | null; deadline_passed: boolean; can_contest: boolean;
   bank_request: { field?: string; reason?: string } | null; evidence_files: number; created_at: string;
+  proofs?: { label: string; verdict: 'strong' | 'relevant' | 'needs_attention' | 'not_useful' | null; field: string | null }[];
+  response?: { summary: string | null; amount: number | null; submitted_at: number | null } | null;
 }
 export interface NotificationItem {
   id: number; dispute_id: string; kind: string; channel: 'in_app' | 'email' | 'whatsapp'; status: 'sent' | 'failed' | 'skipped';

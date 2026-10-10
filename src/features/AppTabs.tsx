@@ -1,4 +1,5 @@
 import { useEffect, useState, type ComponentType, type FormEvent } from 'react';
+import { SentPreview } from './SentResponse';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, type QueryKey } from '@tanstack/react-query';
 import {
@@ -309,6 +310,7 @@ export function DisputesTab() {
             <Text>{d.reason_label}</Text>
             <Text size="small" color="surface.text.gray.muted">{d.payment_id} · raised {time(d.created_at)}</Text>
             {d.status === 'open' && dl && <Text size="small" weight="semibold" color={dl.urgent ? 'feedback.text.notice.intense' : 'surface.text.gray.subtle'}>Respond by {dl.when} · {dl.countdown}</Text>}
+            {d.status !== 'open' && (d.response || !!d.proofs?.length) && <SentPreview proofs={d.proofs || []} summary={d.response?.summary} />}
             {d.status === 'open' && <span className="row-cta"><Text size="small" weight="semibold" color="surface.text.primary.normal">{d.bank_request ? 'Add clearer proof' : d.evidence_files ? `Continue · ${d.evidence_files} file${d.evidence_files === 1 ? '' : 's'} added` : 'Add proof from phone'} →</Text></span>}
           </Link>
         );

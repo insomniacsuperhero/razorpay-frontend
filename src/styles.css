@@ -284,3 +284,14 @@ button.pill, .pill { background: #eef0f3; color: #1b2b44; font-size: 13.5px; fon
 .copy { display: inline-flex; align-items: center; gap: 8px; background: none; border: 0; cursor: pointer; padding: 0; }
 .mono.strong { font-size: 14px; font-weight: 600; color: #0f1b2d; }
 .setting.compact { min-height: 54px; padding: 12px 0; }
+
+/* Sent response + proofs (under review, won, lost) */
+.sent-meta { margin-top: 8px; }
+.proof-list { display: flex; flex-direction: column; gap: 8px; }
+.proof-row { background: #fff; border: 1px solid #e3e8f0; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.proof-row-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.proof-row-title { display: flex; flex-direction: column; min-width: 0; }
+.proof-row-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sent-preview { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e3e8f0; }
+.sent-preview-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.sent-preview-row > :first-child { min-width: 0; flex: 1; }

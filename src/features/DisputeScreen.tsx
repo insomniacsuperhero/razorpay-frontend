@@ -9,6 +9,7 @@ import { KV, Panel, Screen, Section } from '../components/ui';
 import { activeEvidence, deadlineParts, elapsed, isUseful, METHOD, newKey, paymentDate, secondsText, useNow } from '../lib/format';
 import { useWorkspace } from './workspace';
 import { useApp } from './app';
+import { SentResponse } from './SentResponse';
 
 const STATUS_BADGE: Record<string, { text: string; color: 'notice' | 'information' | 'positive' | 'negative' | 'neutral' }> = {
   open: { text: 'Action required', color: 'notice' },
@@ -84,6 +85,9 @@ export function DisputeScreen() {
       {d.status === 'under_review' && <Submitted seconds={location.state?.submittedSeconds ?? null} />}
       {d.status === 'won' && <Alert color="positive" title="The bank decided in your favour" description="No amount was deducted for this dispute." isDismissible={false} isFullWidth />}
       {d.status === 'lost' && <Alert color="negative" title={`${d.amount_display} was deducted`} description="This dispute is closed. You accepted it, or the bank decided for the customer." isDismissible={false} isFullWidth />}
+      {d.status !== 'open' && (d.evidence_on_record.submitted_at || data.run.submitted_at) && (
+        <SentResponse onRecord={d.evidence_on_record} evidence={evidence} amountDisplay={d.amount_display} />
+      )}
 
       {d.status === 'open' && d.bank_request && (
         <Alert color="notice" title="The bank asked for more proof" isDismissible={false} isFullWidth
@@ -149,7 +153,6 @@ export function DisputeScreen() {
 function Submitted({ seconds }: { seconds: number | null }) {
   const { data } = useWorkspace();
   const taken = seconds != null ? secondsText(seconds) : elapsed(data.run.timer_started_at, data.run.submitted_at);
-  const fields = Object.entries(data.dispute.evidence_on_record).filter(([k, v]) => Array.isArray(v) && v.length && k !== 'others');
   return (
     <Panel tone="success">
       <div className="success-head">
@@ -160,7 +163,6 @@ function Submitted({ seconds }: { seconds: number | null }) {
         </div>
       </div>
       {taken && <div className="taken"><Text size="small" color="surface.text.gray.muted">Time from Add proof to submitted</Text><Text weight="semibold">{taken}</Text></div>}
-      {fields.length > 0 && <Text size="xsmall" color="surface.text.gray.muted">Sent: {fields.map(([k, v]) => `${k} (${(v as unknown[]).length})`).join(' · ')}</Text>}
     </Panel>
   );
 }

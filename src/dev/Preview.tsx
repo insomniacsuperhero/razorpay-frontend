@@ -19,7 +19,7 @@ export function sampleDetail(scenario: string): DisputeDetail {
       reason_code: 'goods_not_received', reason_label: 'Customer says the order never arrived',
       respond_by_iso: new Date(Date.now() + hours * 3_600_000).toISOString(), seconds_left: hours * 3600, deadline_passed: false, can_contest: scenario !== 'submitted',
       bank_request: scenario === 'bank' ? { field: 'shipping_proof', reason: 'The delivery proof is unclear. Please upload a clearer courier screenshot.' } : null,
-      evidence_on_record: scenario === 'submitted' ? { shipping_proof: ['doc_Sample1'], customer_communication: ['doc_Sample2'] } : {},
+      evidence_on_record: scenario === 'submitted' ? { shipping_proof: ['doc_Sample1'], customer_communication: ['doc_Sample2'], summary: 'Order PB-1001 (₹2,499) was delivered on 7 Oct by Delhivery to the address given at checkout. The customer confirmed receipt on WhatsApp on 7 Oct.', amount: 249900, submitted_at: Math.floor(Date.now() / 1000) - 506 } : {},
     },
     payment: { id: 'pay_SampleTkYxHT', amount_display: '₹2,499', status: 'captured', method: 'upi', created_at: new Date(Date.now() - 6 * 86_400_000).toISOString(), contact_masked: '•••••4321', order_ref: 'PB-1001' },
     payment_verified: true,
@@ -28,9 +28,21 @@ export function sampleDetail(scenario: string): DisputeDetail {
       helpful: [{ field: 'customer_communication', label: 'Customer acknowledgement' }, { field: 'billing_proof', label: 'Purchase details' }],
       hint: "For 'not received', courier tracking or a delivery screenshot helps most.",
     },
-    evidence: scenario === 'bank' ? [bankCard()] : [],
+    evidence: scenario === 'bank' ? [bankCard()] : scenario === 'submitted' ? sentCards() : [],
     run: { timer_started_at: scenario === 'submitted' ? new Date(Date.now() - 600_000).toISOString() : null, submitted_at: scenario === 'submitted' ? new Date(Date.now() - 600_000 + 94_000).toISOString() : null, draft_summary: null, contested_amount: null },
   };
+}
+
+function sentCards(): EvidenceCard[] {
+  const base = { status: 'ready' as const, stage_index: 5, detected_mime_type: 'image/jpeg', mismatches: [], facts: [] };
+  return [
+    { ...base, id: 'ev_s1', filename: 'delhivery.jpg', document_type: 'Courier tracking screenshot', field: 'shipping_proof', field_label: 'Delivery confirmation',
+      verdict: 'strong', reason: 'Delivery status and tracking ID are readable, and the date matches the order.', razorpay_document_id: 'doc_Sample1' },
+    { ...base, id: 'ev_s2', filename: 'whatsapp-chat.png', document_type: 'WhatsApp chat with customer', field: 'customer_communication', field_label: 'Customer communication',
+      verdict: 'relevant', reason: 'The customer says "received, thanks" on 7 Oct.', razorpay_document_id: 'doc_Sample2' },
+    { ...base, id: 'ev_s3', filename: 'product.jpg', document_type: 'Product photo', field: 'none', field_label: 'Not used',
+      verdict: 'not_useful', reason: "This product photo doesn't confirm delivery.", razorpay_document_id: null },
+  ];
 }
 
 function bankCard(): EvidenceCard {
@@ -115,7 +127,7 @@ export function createFakeApi(detail: DisputeDetail): DisputeApi {
     saveDraft: async body => { summaryEdit = body.summary; return coverage(); },
     contest: async (_key: string, action = 'submit') => {
       await sleep(700);
-      if (action === 'submit') { detail.dispute.status = 'under_review'; detail.run.submitted_at = new Date().toISOString(); detail.dispute.evidence_on_record = coverage().fields_with_documents; detail.dispute.bank_request = null; }
+      if (action === 'submit') { detail.dispute.status = 'under_review'; detail.run.submitted_at = new Date().toISOString(); { const cov = coverage(); detail.dispute.evidence_on_record = { ...cov.fields_with_documents, summary: cov.summary.draft, amount: cov.contested_amount, submitted_at: Math.floor(Date.now() / 1000) }; } detail.dispute.bank_request = null; }
       const secs = detail.run.timer_started_at ? Math.round((Date.now() - Date.parse(detail.run.timer_started_at)) / 1000) : null;
       return { dispute: clone(detail.dispute), documents: docs().length, seconds_to_submit: action === 'submit' ? secs : null };
     },
@@ -139,6 +151,8 @@ export function createFakeMerchant(detail: DisputeDetail): MerchantApi {
     mk(7, 74900, 'wallet', 5 * day), disputed(),
   ];
   const disputeItem = (): DisputeListItem => ({ ...detail.dispute, payment_id: detail.payment!.id, evidence_files: detail.evidence.filter(e => !e.removed).length,
+    proofs: detail.evidence.filter(e => !e.removed && e.status === 'ready').map(e => ({ label: e.document_type || e.filename, verdict: e.verdict ?? null, field: e.field ?? null })),
+    response: detail.dispute.evidence_on_record.submitted_at ? { summary: (detail.dispute.evidence_on_record.summary as string) ?? null, amount: (detail.dispute.evidence_on_record.amount as number) ?? null, submitted_at: detail.dispute.evidence_on_record.submitted_at as number } : null,
     created_at: new Date(now - 2 * 3_600_000).toISOString() } as DisputeListItem);
   let read = false;
   const notes = (): NotificationItem[] => (['in_app', 'whatsapp', 'email'] as const).map((channel, i) => ({
