@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangleIcon, CloseIcon, IconButton, Text } from '@razorpay/blade/components';
 import { SrOnly } from '../components/ui';
@@ -9,7 +9,8 @@ const SEEN = 'proof-bridge:push-seen';
 const seen = (): number[] => { try { return JSON.parse(sessionStorage.getItem(SEEN) || '[]'); } catch { return []; } };
 const markSeen = (id: number) => { try { sessionStorage.setItem(SEEN, JSON.stringify([...seen(), id])); } catch { /* storage blocked */ } };
 
-/** In-app push: the newest unread in-app alert slides in at the top of whatever screen is open. */
+/** In-app push: the newest unread in-app alert slides in at the top of whatever screen is open,
+ *  except for the dispute being viewed. Opening a dispute marks its alerts read (see App.tsx). */
 export function PushBanner() {
   const ws = useApp();
   const navigate = useNavigate();
@@ -17,7 +18,9 @@ export function PushBanner() {
   const q = useQuery({ queryKey: ['merchant', 'notifications'], queryFn: ({ signal }) => ws.merchant.notifications(signal), refetchInterval: 15_000 });
   const [hidden, setHidden] = useState<number | null>(null);
   const [held, setHeld] = useState(false);   // pause auto-hide while the seller is hovering or focused on it
-  const next = q.data?.items.find(n => n.channel === 'in_app' && !n.read && !seen().includes(n.id));
+  // Never alert about the dispute that is already open on screen.
+  const openDispute = decodeURIComponent(useLocation().pathname.match(/\/d\/([^/]+)/)?.[1] || '');
+  const next = q.data?.items.find(n => n.channel === 'in_app' && !n.read && !seen().includes(n.id) && n.dispute_id !== openDispute);
   useEffect(() => {
     if (!next || held) return;
     const t = setTimeout(() => { markSeen(next.id); setHidden(next.id); }, 10000);
@@ -29,7 +32,7 @@ export function PushBanner() {
   if (!showing) return live;
   function open() {
     markSeen(next!.id); setHidden(next!.id);
-    void ws.merchant.markRead().then(() => client.invalidateQueries({ queryKey: ['merchant', 'notifications'] })).catch(() => undefined);
+    void ws.merchant.markRead(next!.dispute_id).then(() => client.invalidateQueries({ queryKey: ['merchant', 'notifications'] })).catch(() => undefined);
     navigate(disputeHref(ws.base, next!.dispute_id));
   }
   return (

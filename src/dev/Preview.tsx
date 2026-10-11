@@ -186,7 +186,7 @@ export function createFakeMerchant(detail: DisputeDetail): MerchantApi {
     products: async () => ({ payment_links: { count: 4, paid: 3, recent: [{ id: 'plink_S1', amount_display: '₹2,499', status: 'paid', description: 'Handloom kurta', short_url: null }, { id: 'plink_S2', amount_display: '₹899', status: 'created', description: 'Cotton dupatta', short_url: null }] }, invoices: { count: 1, paid: 1 } }),
     disputes: async () => ({ items: [disputeItem()] }),
     notifications: async () => ({ items: notes(), unread: read ? 0 : 1 }),
-    markRead: async () => { read = true; },
+    markRead: async (_disputeId?: string) => { read = true; },
     pushKey: async () => ({ public_key: null }),
     pushSubscribe: async () => ({ subscribed: true }),
     pushUnsubscribe: async () => undefined,

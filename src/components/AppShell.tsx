@@ -37,7 +37,7 @@ function TabBar({ root }: { root: string }) {
       {TABS.map(t => (
         <NavLink key={t.to} to={`${root}/${t.to}`} className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}>
           {({ isActive }) => <>
-            <span className="tab-icon"><t.icon size="large" color={isActive ? 'surface.icon.primary.normal' : 'surface.icon.gray.normal'} />{t.to === 'disputes' && pending > 0 && <span className="tab-badge">{pending}</span>}</span>
+            <span className="tab-icon"><t.icon size="large" color={isActive ? 'surface.icon.primary.normal' : 'surface.icon.gray.normal'} />{t.to === 'disputes' && pending > 0 && <span className="tab-badge"><span aria-hidden="true">{pending}</span><span className="sr-only">, {pending} need{pending === 1 ? 's' : ''} a response</span></span>}</span>
             <span>{t.label}</span>
           </>}
         </NavLink>

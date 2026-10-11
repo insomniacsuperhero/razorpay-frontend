@@ -14,7 +14,7 @@ const bladeTheme = (() => {
 })();
 import { ApiError } from './api/client';
 import { createDisputeApi, type DisputeApi } from './api/workflow';
-import { createMerchantApi, type MerchantApi } from './api/merchant';
+import { createMerchantApi, type MerchantApi, type NotificationItem } from './api/merchant';
 import { clearSession, exchangeLink, openSession, readSession } from './auth/session';
 import type { Session } from './api/types';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -125,6 +125,17 @@ export function DisputeWorkspace({ id, api, merchant, root, expire, preview }: W
   const [sheet, setSheet] = useState(false);
   const timerStarted = useRef(false);
   useEffect(() => { if (query.error instanceof ApiError && query.error.isAuth) expire(); }, [query.error, expire]);
+  // Opening a dispute means its alerts have been seen: clear them here and on the server, so the
+  // banner and the unread count don't keep pointing at a dispute the seller is already handling.
+  useEffect(() => {
+    if (!id) return;
+    client.setQueryData<{ items: NotificationItem[]; unread: number }>(['merchant', 'notifications'], old => {
+      if (!old) return old;
+      const items = old.items.map(n => (n.dispute_id === id && n.channel === 'in_app' ? { ...n, read: true } : n));
+      return { items, unread: items.filter(n => n.channel === 'in_app' && !n.read).length };
+    });
+    merchant.markRead(id).then(() => client.invalidateQueries({ queryKey: ['merchant', 'notifications'] })).catch(() => undefined);
+  }, [id, merchant, client]);
   const refresh = useCallback(() => client.invalidateQueries({ queryKey: ['dispute', id] }), [client, id]);
   const startTimer = useCallback(() => {
     if (timerStarted.current) return;

@@ -45,7 +45,8 @@ export function createMerchantApi(token: string) {
     products: (s?: AbortSignal) => get<Products>('/products', s),
     disputes: (s?: AbortSignal) => get<{ items: DisputeListItem[] }>('/disputes', s),
     notifications: (s?: AbortSignal) => get<{ items: NotificationItem[]; unread: number }>('/notifications', s),
-    markRead: () => request<void>('/merchant/notifications/read', { method: 'POST', token, body: {} }),
+    /** Marks in-app alerts read: one dispute's (when it is opened), or all of them. */
+    markRead: (disputeId?: string) => request<void>(`/merchant/notifications/read${disputeId ? `?dispute_id=${encodeURIComponent(disputeId)}` : ''}`, { method: 'POST', token, body: {} }),
     pushKey: () => get<{ public_key: string | null }>('/push/key'),
     pushSubscribe: (sub: PushSubscriptionJSON) => request<{ subscribed: boolean }>('/merchant/push/subscribe', { method: 'POST', token, body: { endpoint: sub.endpoint, keys: sub.keys } }),
     pushUnsubscribe: (endpoint: string) => request<void>('/merchant/push/unsubscribe', { method: 'POST', token, body: { endpoint } }),
